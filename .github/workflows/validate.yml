@@ -3,34 +3,63 @@ name: Validate RecipeMD format
 on:
   push:
     paths:
-      - 'recipes/**'
+      - "recipes/**/recipe.md"
+      - ".github/workflows/validate.yml"
   pull_request:
     paths:
-      - 'recipes/**'
+      - "recipes/**/recipe.md"
+      - ".github/workflows/validate.yml"
+
+permissions:
+  contents: read
 
 jobs:
   validate:
+    name: RecipeMD validation
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
-          python-version: '3'
+          python-version: "3.x"
 
-      - name: Install recipemd-validator
-        run: pip install recipemd-validator
+      - name: Install RecipeMD
+        run: python -m pip install --upgrade pip recipemd
 
-      - name: Validate all recipe.md files
+      - name: Validate recipes
+        shell: bash
         run: |
-          for dir in recipes/*/; do
-            if [ -f "$dir/recipe.md" ]; then
-              echo "Validating $dir/recipe.md"
-              python -m recipemd_validator validate "$dir/recipe.md"
+          set -euo pipefail
+
+          status=0
+
+          while IFS= read -r -d '' file; do
+            echo "::group::Validating ${file}"
+
+            if ! python - "$file" <<'PY'
+          import sys
+          from recipemd.data import RecipeParser
+
+          filename = sys.argv[1]
+
+          try:
+              with open(filename, "r", encoding="UTF-8") as f:
+                  RecipeParser().parse(f.read())
+          except Exception as exc:
+              print(f"{filename}: Invalid RecipeMD ({exc})", file=sys.stderr)
+              sys.exit(1)
+          PY
+            then
+              status=1
             else
-              echo "No recipe.md found in $dir"
-              exit 2
+              echo "OK"
             fi
-          done
+
+            echo "::endgroup::"
+          done < <(find recipes -type f -path '*/recipe.md' -print0)
+
+          exit "$status"
