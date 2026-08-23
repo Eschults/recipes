@@ -1,0 +1,36 @@
+name: Validate RecipeMD format
+
+on:
+  push:
+    paths:
+      - 'recipes/**'
+  pull_request:
+    paths:
+      - 'recipes/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3'
+
+      - name: Install recipemd-validator
+        run: pip install recipemd-validator
+
+      - name: Validate all recipe.md files
+        run: |
+          for dir in recipes/*/; do
+            if [ -f "$dir/recipe.md" ]; then
+              echo "Validating $dir/recipe.md"
+              python -m recipemd_validator validate "$dir/recipe.md"
+            else
+              echo "No recipe.md found in $dir"
+              exit 2
+            fi
+          done
