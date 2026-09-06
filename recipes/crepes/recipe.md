@@ -10,7 +10,7 @@ Façon Paul Bocuse (50% du beurre recommandé)
 - *250 g* farine T55
 - *2 cuillères à soupe* sucre
 - *4* oeufs
-- *125 g* beurre fondu
+- *125 g* beurre
 - *1* pincée de sel
 
 ---

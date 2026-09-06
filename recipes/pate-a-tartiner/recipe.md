@@ -10,7 +10,7 @@ Imitation Nutella, recette du chef Christophe Michalak
 
 - *270 g* noisettes
 - *150 g* sucre glace
-- *120 g* sucre blanc en poudre
+- *120 g* sucre
 - *150 g* chocolat au lait
 - *25 g* lait en poudre
 - *3 g* fleur de sel

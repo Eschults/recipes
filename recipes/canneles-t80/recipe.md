@@ -7,7 +7,7 @@ Pâtisserie Bordelaise, version Labo & Gato (Cassonade)
 ---
 
 - *500 cL* lait
-- *520 g* sucre cassonade
+- *520 g* cassonade
 - *65 g* beurre
 - *1* gousse vanille
 - *300 g* farine T80
