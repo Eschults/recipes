@@ -1,5 +1,7 @@
 # Curry de potiron aux crevêtes
 
+Plat convivial pour l'hiver
+
 **6 personnes**
 
 ---
