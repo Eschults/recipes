@@ -2,6 +2,8 @@
 
 Pâtisserie Bordelaise, ma première recette
 
+*pâtisserie*
+
 **12 cannelés**
 
 ---
