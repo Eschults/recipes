@@ -12,7 +12,7 @@
 - *4 g* levure fraîche de boulanger
 - *315 g* eau
 - *30 g* huile d'olive
-- *50 g* levain liquide (facultatif, sinon ajouter plus d'eau)
+- *50 g* levain
 
 ---
 
