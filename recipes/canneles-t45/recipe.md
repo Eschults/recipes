@@ -8,7 +8,7 @@ Pâtisserie Bordelaise, ma première recette
 
 ---
 
-- *500 cL* de lait
+- *500 g* de lait
 - *250 g* de sucre
 - *2* oeufs entiers
 - *2* jaunes d'oeufs
