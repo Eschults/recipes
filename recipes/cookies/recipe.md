@@ -11,7 +11,7 @@
 - *1 cuillère à café* extrait de vanille
 - *1 cuillère à café* bicarbonate de soude
 - *1/2 cuillère à café* sel
-- *2* plaquettes de chocolat noir (ou 1 plaquette + noix/fruits/etc.)
+- *2* plaquettes de chocolat type Nestlé Dessert
 
 ---
 
