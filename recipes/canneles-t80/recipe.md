@@ -12,12 +12,12 @@ Pâtisserie Bordelaise, version Labo & Gato (Cassonade)
 - *1* gousse vanille
 - *300 g* farine T80
 - *4* oeufs
-- *15 cL* rhum ambré
+- *10 cL* rhum ambré
 - *1* boite d'[agent de graîssage _Slider_](https://www.laboetgato.fr/fr/agents-de-graissage/11076-slider-agent-de-graissage-hautes-temperatures-200-g-3333333010024.html)
 
 ---
 
-## Préparation de la pâte
+## Pâte
 
 1. Dans une casserole, mélanger le lait, la moitié du sucre, le beurre et la vanille. Faire chauffer doucement jusque 65°C.
 1. Dans un cul de poule, mélanger la farine, le reste de sucre et les oeufs
