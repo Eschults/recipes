@@ -8,8 +8,8 @@ Pâtisserie Bordelaise, ma première recette
 
 ---
 
-- *500 g* de lait
-- *250 g* de sucre
+- *500 g* lait
+- *250 g* sucre
 - *2* oeufs entiers
 - *2* jaunes d'oeufs
 - *10 cL* rhum ambré
