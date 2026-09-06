@@ -1,4 +1,4 @@
-# Curry de potiron aux crevêtes
+# Curry de potiron aux crevettes
 
 Plat convivial pour l'hiver
 
