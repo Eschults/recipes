@@ -16,7 +16,7 @@ Recette de Norbert Tarayre
 - *2* oignons
 - *4* gousses d'ail entières
 - *2* échalotes
-- *2* bouquets garnis
+- *1* bouquets garnis
 - *1 c à café* pâte de miso
 - huile d'olive
 - romarin
