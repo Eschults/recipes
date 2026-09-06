@@ -2,6 +2,8 @@
 
 À la levure, avec flocons de pomme de terre
 
+*boulangerie, vegan*
+
 **2 focaccias**
 
 ---

@@ -2,7 +2,7 @@
 
 Imitation Nutella, recette du chef Christophe Michalak
 
-*vegan*
+*dessert, végétarien*
 
 **600g de pâte**
 

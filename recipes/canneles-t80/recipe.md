@@ -2,6 +2,8 @@
 
 Pâtisserie Bordelaise, version Labo & Gato (Cassonade)
 
+*dessert, végétarien*
+
 **12 cannelés**
 
 ---

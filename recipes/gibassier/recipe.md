@@ -2,6 +2,8 @@
 
 Galette provençale à l'huile d'olive et à la fleur d'oranger, servie pour Noël
 
+*dessert, vegan*
+
 **2 galettes**
 
 ---

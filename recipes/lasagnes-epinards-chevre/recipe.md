@@ -2,7 +2,7 @@
 
 Version végétarienne, avec béchamel et bûche de chèvre fondante
 
-*végétarien*
+*plat, végétarien*
 
 **4 personnes**
 

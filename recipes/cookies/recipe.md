@@ -1,5 +1,7 @@
 # Cookies
 
+*dessert, végétarien*
+
 **24 grands cookies (~3 fournées de 8)**
 
 ---

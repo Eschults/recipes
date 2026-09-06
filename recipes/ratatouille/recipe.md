@@ -2,6 +2,8 @@
 
 Recette de Norbert Tarayre
 
+*plat, vegan*
+
 **6 personnes**
 
 ---

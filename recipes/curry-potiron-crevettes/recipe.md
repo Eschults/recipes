@@ -2,6 +2,8 @@
 
 Plat convivial pour l'hiver
 
+*plat*
+
 **6 personnes**
 
 ---

@@ -1,5 +1,7 @@
 # Houmous
 
+*apéritif, vegan*
+
 **6 personnes**
 
 ---

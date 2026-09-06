@@ -2,6 +2,8 @@
 
 Façon Paul Bocuse (50% du beurre recommandé)
 
+*dessert, végétarien*
+
 **10 crêpes**
 
 ---

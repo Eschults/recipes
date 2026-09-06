@@ -2,6 +2,8 @@
 
 Confiserie provençale, pâte d'amandes et fruits confits sur feuille azyme
 
+*dessert, végétarien*
+
 **18 calissons**
 
 ---

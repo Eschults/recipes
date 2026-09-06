@@ -2,6 +2,8 @@
 
 Recette classique, mesurée avec le pot de yaourt
 
+*dessert, végétarien*
+
 **6 personnes**
 
 ---

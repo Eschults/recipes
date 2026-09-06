@@ -2,6 +2,8 @@
 
 Recette classique et végétarienne
 
+*dessert, végétarien*
+
 **8 personnes**
 
 ---

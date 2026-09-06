@@ -2,6 +2,8 @@
 
 Version végétarienne, riz et légumes sautés façon coréenne
 
+*plat, végétarien*
+
 **4 personnes**
 
 ---

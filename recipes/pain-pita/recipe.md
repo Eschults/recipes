@@ -1,5 +1,7 @@
 # Pain Pita
 
+*boulangerie, vegan*
+
 **6 pitas**
 
 ---

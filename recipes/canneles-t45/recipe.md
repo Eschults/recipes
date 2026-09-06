@@ -2,7 +2,7 @@
 
 Pâtisserie Bordelaise, ma première recette
 
-*pâtisserie*
+*dessert, végétarien*
 
 **12 cannelés**
 

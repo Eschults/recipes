@@ -2,6 +2,8 @@
 
 Style napolitain, cuisson au four traditionnel (sans four à pizza spécial)
 
+*boulangerie, vegan*
+
 **4 pâtons de ~300g**
 
 ---
