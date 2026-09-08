@@ -16,7 +16,7 @@ Confiserie provençale, pâte d'amandes et fruits confits sur feuille azyme
 - *160 g* cubes d'oranges confites
 - *160 g* melon confit
 - *40 g* gingembre confit
-- *2* feuilles azyme
+- *2* feuille azyme
 
 ## Glace royale
 

@@ -20,7 +20,7 @@ Pâte sucrée, crème d'amande et poires au sirop
 
 - *100 g* beurre
 - *75 g* cassonade
-- *2* oeufs moyens
+- *2* oeuf moyen
 - *120 g* poudre d'amande
 - *40 g* crème liquide entière
 - *1/2 cuillère à café* extrait de vanille

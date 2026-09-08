@@ -8,16 +8,16 @@ Recette de Norbert Tarayre
 
 ---
 
-- *4* courgettes
-- *2* aubergines
-- *2* poivrons rouges
-- *2* poivrons verts
-- *6* tomates
-- *2* oignons
-- *4* gousses d'ail entières
-- *2* échalotes
-- *1* bouquets garnis
-- *1 c à café* pâte de miso
+- *4* courgette
+- *2* aubergine
+- *2* poivron rouge
+- *2* poivron vert
+- *6* tomate
+- *2* oignon
+- *4* gousse d'ail entière
+- *2* échalote
+- *1* bouquet garni
+- *1 cuillère à café* pâte de miso
 - huile d'olive
 - romarin
 - herbes de Provence

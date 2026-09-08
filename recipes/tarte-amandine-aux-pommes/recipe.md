@@ -9,7 +9,7 @@ Recette de Cyril Lignac
 ---
 
 - *1* pâte feuilletée
-- *4* pommes
+- *4* pomme
 - *100 g* cassonade
 - *100 g* poudre d'amande
 - *1* sachet sucre vanillé

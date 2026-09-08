@@ -8,12 +8,12 @@
 
 - *220 g* beurre
 - *350 g* farine
-- *2* oeufs
+- *2* oeuf
 - *200 g* cassonade
 - *1 cuillère à café* extrait de vanille
 - *1 cuillère à café* bicarbonate de soude
 - *1/2 cuillère à café* sel
-- *2* plaquettes de chocolat type Nestlé Dessert
+- *2* plaquette de chocolat type Nestlé Dessert
 
 ---
 

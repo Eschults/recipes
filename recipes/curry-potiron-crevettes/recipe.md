@@ -8,13 +8,13 @@ Plat convivial pour l'hiver
 
 ---
 
-- *18* grosses crevettes crues décortiquées
+- *18* grosse crevette crue décortiquée
 - *1 kg* potiron
 - *500 g* tomates pelées en boîte
-- *2* oignons
-- *30 cl* bouillon de volaille
+- *2* oignon
+- *30 cL* bouillon de volaille
 - *30 g* beurre
-- *2* yaourts veloutés
+- *2* yaourt velouté
 - *30 cL* lait de coco non sucré
 - *3 cuillères à soupe* huile d'olive
 - *1 cuillère à soupe* pâte de curry rouge

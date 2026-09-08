@@ -12,7 +12,7 @@ Recette classique, mesurée avec le pot de yaourt
 - *240 g* sucre
 - *225 g* farine
 - *110 g* huile de tournesol
-- *3* oeufs
+- *3* oeuf
 - *1* sachet levure chimique
 
 ---

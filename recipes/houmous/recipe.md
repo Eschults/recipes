@@ -8,7 +8,7 @@
 
 - *300 g* pois chiches
 - *3 cuillères à soupe* tahin
-- *2* gousses d'ail
+- *2* gousse d'ail
 - *½* citron
 - *3 cuillères à soupe* huile d'olive
 - *1 cuillère à café* sel

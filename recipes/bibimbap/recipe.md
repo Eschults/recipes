@@ -14,9 +14,9 @@ Version végétarienne, riz et légumes sautés façon coréenne
 - *160 g* champignons Shiitake
 - *180 g* épinards frais
 - *160 g* pousses de soja
-- *3* carottes
+- *3* carotte
 - *200 g* kimshi
-- *4* oeufs
+- *4* oeuf
 - *1 cuillère à soupe* sauce soja
 - huile de sésame
 

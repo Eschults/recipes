@@ -13,7 +13,7 @@ Pâtisserie Bordelaise, version Labo & Gato (Cassonade)
 - *65 g* beurre
 - *1* gousse vanille
 - *300 g* farine T80
-- *4* oeufs
+- *4* oeuf
 - *10 cL* rhum ambré
 - *1* boite d'[agent de graîssage _Slider_](https://www.laboetgato.fr/fr/agents-de-graissage/11076-slider-agent-de-graissage-hautes-temperatures-200-g-3333333010024.html)
 

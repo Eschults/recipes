@@ -12,7 +12,7 @@ Recette classique et végétarienne
 - *125 g* beurre
 - *15 cL* lait
 - *1* sachet levure chimique
-- *4* oeufs
+- *4* oeuf
 - *250 g* sucre
 - *180 g* farine
 
