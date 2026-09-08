@@ -19,7 +19,6 @@ Recette de Cyril Lignac
 - *2 cuillères à soupe* rhum
 - *2 cuillères à soupe* sucre
 - *1 cuillère à café* cannelle
-- beurre (pour le moule)
 
 ---
 
