@@ -16,7 +16,7 @@ import { extractRecipe } from './extract.js'
 import { parseIssueBody } from './issue.js'
 import { parseToData } from './parse.js'
 import { renderRecipeMD } from './render.js'
-import { buildSlug, normalizeHandle } from './slug.js'
+import { buildSlug, displayHandle } from './slug.js'
 
 const MAX_ATTEMPTS = 3
 
@@ -44,8 +44,8 @@ export function collectExistingTags(directory = recipesDir) {
 
 function sourcesFor(url, handle) {
   if (!url) return []
-  const normalized = normalizeHandle(handle)
-  return [{ title: normalized ? `Instagram - @${normalized}` : 'Instagram', url }]
+  const credited = displayHandle(handle)
+  return [{ title: credited ? `Instagram - @${credited}` : 'Instagram', url }]
 }
 
 /**

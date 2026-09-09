@@ -40,6 +40,19 @@ export function normalizeHandle(input) {
   return slugify((fromUrl ? fromUrl[1] : raw).replace(/^@/, ''))
 }
 
+/**
+ * The handle as written, for crediting the source. Only the `@` and any
+ * profile-URL wrapper come off: `louloukitchen_` is the account's actual name,
+ * so the slug's normalisation must not leak into the attribution.
+ */
+export function displayHandle(input) {
+  const raw = String(input ?? '').trim()
+  if (!raw) return ''
+
+  const fromUrl = raw.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([^/?#]+)/i)
+  return (fromUrl ? fromUrl[1] : raw).replace(/^@/, '').replace(/\/+$/, '')
+}
+
 /** `("Cookies", "louloukitchen_")` becomes `cookies-louloukitchen`. */
 export function buildSlug(title, handle) {
   const base = slugify(title)

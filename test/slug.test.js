@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildSlug, normalizeHandle, slugify } from '../scripts/add-recipe/slug.js'
+import { buildSlug, displayHandle, normalizeHandle, slugify } from '../scripts/add-recipe/slug.js'
 
 test('slugify matches the conventions the collection already uses', () => {
   assert.equal(slugify('Pâte à tartiner'), 'pate-a-tartiner')
@@ -28,4 +28,11 @@ test('buildSlug appends the handle whenever there is one', () => {
 
 test('buildSlug refuses a title that produces nothing', () => {
   assert.throws(() => buildSlug('!!!', 'someone'), /does not produce a usable slug/)
+})
+
+test('displayHandle credits the account as it is actually spelled', () => {
+  assert.equal(displayHandle('louloukitchen_'), 'louloukitchen_')
+  assert.equal(displayHandle('@Ottolenghi.Kitchen'), 'Ottolenghi.Kitchen')
+  assert.equal(displayHandle('https://www.instagram.com/louloukitchen_/'), 'louloukitchen_')
+  assert.equal(displayHandle(''), '')
 })
