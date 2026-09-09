@@ -5,10 +5,12 @@ on:
     paths:
       - "recipes/**/recipe.md"
       - ".github/workflows/validate.yml"
+      - ".github/actions/validate-recipemd/**"
   pull_request:
     paths:
       - "recipes/**/recipe.md"
       - ".github/workflows/validate.yml"
+      - ".github/actions/validate-recipemd/**"
 
 permissions:
   contents: read
@@ -22,44 +24,5 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Install RecipeMD
-        run: python -m pip install --upgrade pip recipemd
-
-      - name: Validate recipes
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          status=0
-
-          while IFS= read -r -d '' file; do
-            echo "::group::Validating ${file}"
-
-            if ! python - "$file" <<'PY'
-          import sys
-          from recipemd.data import RecipeParser
-
-          filename = sys.argv[1]
-
-          try:
-              with open(filename, "r", encoding="UTF-8") as f:
-                  RecipeParser().parse(f.read())
-          except Exception as exc:
-              print(f"{filename}: Invalid RecipeMD ({exc})", file=sys.stderr)
-              sys.exit(1)
-          PY
-            then
-              status=1
-            else
-              echo "OK"
-            fi
-
-            echo "::endgroup::"
-          done < <(find recipes -type f -path '*/recipe.md' -print0)
-
-          exit "$status"
+      - name: Validate every recipe
+        uses: ./.github/actions/validate-recipemd

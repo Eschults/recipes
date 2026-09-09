@@ -1,0 +1,137 @@
+name: Add a recipe from a caption
+
+# Issue forms are the only trigger GitHub offers with a real textarea, and a
+# caption is many lines long. workflow_dispatch is kept for the command line,
+# where multi-line values pass fine through the API even though the web form
+# renders a single-line box.
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      caption:
+        description: The caption to turn into a recipe
+        required: true
+      url:
+        description: Link to the original post
+        required: false
+      handle:
+        description: Instagram handle of the account it came from
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: add-recipe-${{ github.event.issue.number || github.run_id }}
+
+jobs:
+  add-recipe:
+    name: Write the recipe and open a pull request
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.issue.labels.*.name, 'add-recipe')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the recipes
+        uses: actions/checkout@v4
+
+      # The RecipeMD parser is the cookbook's, so that a recipe accepted here
+      # is one the cookbook can actually read.
+      - name: Check out the cookbook
+        uses: actions/checkout@v4
+        with:
+          repository: Eschults/cookbook
+          path: cookbook
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The issue body is untrusted input, so it reaches the script through a
+      # file and an environment variable, never through the shell.
+      - name: Assemble the request
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          INPUT_CAPTION: ${{ inputs.caption }}
+          INPUT_URL: ${{ inputs.url }}
+          INPUT_HANDLE: ${{ inputs.handle }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            {
+              printf '### Caption\n\n%s\n\n' "$INPUT_CAPTION"
+              printf '### Source URL\n\n%s\n\n' "${INPUT_URL:-_No response_}"
+              printf '### Instagram handle\n\n%s\n' "${INPUT_HANDLE:-_No response_}"
+            } > request.md
+          else
+            printf '%s' "$ISSUE_BODY" > request.md
+          fi
+
+      - name: Write the recipe
+        id: recipe
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          COOKBOOK_DIR: ${{ github.workspace }}/cookbook
+        run: npm run add-recipe -- --body-file request.md
+
+      # validate.yml cannot help here: a push or pull request made with
+      # GITHUB_TOKEN does not trigger other workflows, so the reference parser
+      # has to run inside this job to be a gate at all. It is the same action
+      # validate.yml uses, so the two checks cannot drift apart.
+      - name: Validate with the reference parser
+        uses: ./.github/actions/validate-recipemd
+        with:
+          path: ${{ steps.recipe.outputs.path }}
+
+      - name: Open a pull request
+        id: pull-request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLUG: ${{ steps.recipe.outputs.slug }}
+          TITLE: ${{ steps.recipe.outputs.title }}
+          RECIPE_PATH: ${{ steps.recipe.outputs.path }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "add-recipe/$SLUG"
+          git add "$RECIPE_PATH"
+          git commit -m "Ajouter $TITLE"
+          git push --set-upstream origin "add-recipe/$SLUG"
+
+          body="Recette écrite à partir d'une légende, à relire avant fusion."
+          if [ -n "$ISSUE_NUMBER" ]; then
+            body="$body
+
+          Closes #$ISSUE_NUMBER"
+          fi
+
+          url=$(gh pr create --base main --head "add-recipe/$SLUG" --title "Ajouter $TITLE" --body "$body")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Link the pull request from the issue
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Recette prête à relire : $PR_URL"
+
+      - name: Report a failure on the issue
+        if: failure() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "La recette n'a pas pu être écrite. Journal : $RUN_URL"
