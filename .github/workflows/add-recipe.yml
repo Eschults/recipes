@@ -89,7 +89,7 @@ jobs:
       - name: Write the recipe
         id: recipe
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           COOKBOOK_DIR: ${{ github.workspace }}/cookbook
         run: npm run add-recipe -- --body-file request.md
 

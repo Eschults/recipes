@@ -12,7 +12,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, write
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { RecipeMDError } from './cookbook.js'
-import { extractRecipe } from './extract.js'
+import { SchemaError, extractRecipe } from './extract.js'
 import { parseIssueBody } from './issue.js'
 import { parseToData } from './parse.js'
 import { renderRecipeMD } from './render.js'
@@ -80,12 +80,15 @@ async function run(argv = process.argv.slice(2)) {
   let previousError = ''
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-    data = await extractRecipe({ caption, handle, existingTags, previousError })
     try {
+      data = await extractRecipe({ caption, handle, existingTags, previousError })
       markdown = renderAndVerify({ ...data, sources: sourcesFor(url, handle) })
       break
     } catch (error) {
-      if (!(error instanceof RecipeMDError) || attempt === MAX_ATTEMPTS) throw error
+      // Both of these mean the model produced something wrong rather than
+      // something being broken, so the message goes back to it and we retry.
+      const worthRetrying = error instanceof RecipeMDError || error instanceof SchemaError
+      if (!worthRetrying || attempt === MAX_ATTEMPTS) throw error
       previousError = error.message
     }
   }

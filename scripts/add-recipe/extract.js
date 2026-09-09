@@ -6,9 +6,11 @@
  * can reach - only wrong content is, and wrong content is reviewable in a
  * pull request.
  */
-import Anthropic from '@anthropic-ai/sdk'
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
+import { GoogleGenAI } from '@google/genai'
 import { z } from 'zod'
+
+/** The model answered, but not with a recipe. The caller retries these. */
+export class SchemaError extends Error {}
 
 const Amount = z.object({
   factor: z.number().describe('The numeric quantity, e.g. 250 for "250 g".'),
@@ -41,9 +43,31 @@ const RecipeSchema = z.object({
   instructionGroups: z.array(InstructionGroup)
 })
 
-// RECIPE_MODEL overrides this, so a cheaper model can be tried against a real
-// caption without editing code.
-const MODEL = process.env.RECIPE_MODEL || 'claude-sonnet-5'
+// 3.8 Flash returned 503 on every attempt; this one is verified end to end.
+const MODEL = process.env.RECIPE_MODEL || 'gemini-3.5-flash-lite'
+
+const RESPONSE_SCHEMA = toGeminiSchema(z.toJSONSchema(RecipeSchema))
+
+/** Gemini takes a subset of JSON Schema: no `$schema`, no `type: [T, "null"]`. */
+function toGeminiSchema(node) {
+  if (Array.isArray(node)) return node.map(toGeminiSchema)
+  if (!node || typeof node !== 'object') return node
+
+  const out = {}
+
+  for (const [key, value] of Object.entries(node)) {
+    if (key === '$schema') continue
+
+    if (key === 'type' && Array.isArray(value)) {
+      out.anyOf = value.map(type => ({ type }))
+      continue
+    }
+
+    out[key] = toGeminiSchema(value)
+  }
+
+  return out
+}
 
 const SYSTEM = `Tu transformes la légende d'une publication de cuisine en une fiche recette structurée, destinée à une collection personnelle rédigée entièrement en français.
 
@@ -78,57 +102,46 @@ function buildUserMessage({ caption, handle, existingTags, previousError }) {
   return parts.join('\n\n')
 }
 
-/**
- * Indicative per-million-token prices, so a run says what it cost instead of
- * turning up on a bill later. Thinking is billed as output, which is what
- * makes the output side dominate here.
- */
-const PRICES = {
-  'claude-opus-5': { input: 5, output: 25 },
-  'claude-sonnet-5': { input: 3, output: 15 },
-  'claude-haiku-4-5': { input: 1, output: 5 }
-}
-
+/** Tokens rather than money: the free tier's quota is what runs out. */
 function reportUsage(response) {
-  const { input_tokens: input = 0, output_tokens: output = 0 } = response.usage ?? {}
-  const price = PRICES[response.model] ?? PRICES[MODEL]
+  const usage = response.usageMetadata ?? {}
+  const thoughts = usage.thoughtsTokenCount ? `, ${usage.thoughtsTokenCount} thinking` : ''
 
-  const cost = price
-    ? ` = $${((input * price.input + output * price.output) / 1e6).toFixed(4)}`
-    : ''
-
-  console.error(`${response.model}: ${input} in, ${output} out${cost}`)
+  console.error(
+    `${MODEL}: ${usage.promptTokenCount ?? 0} in, ` +
+    `${usage.candidatesTokenCount ?? 0} out${thoughts}`
+  )
 }
 
-/**
- * @param {{caption: string, handle?: string, existingTags?: string[],
- *   previousError?: string, client?: Anthropic}} options
- */
 export async function extractRecipe({ caption, handle = '', existingTags = [], previousError = '', client }) {
   if (!caption.trim()) throw new Error('The caption is empty, so there is nothing to extract')
 
-  const anthropic = client ?? new Anthropic()
+  if (!client && !process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set. Put it in .env (see .env.example), or set it in the environment.')
+  }
 
-  const response = await anthropic.messages.parse({
+  const genai = client ?? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+
+  const response = await genai.models.generateContent({
     model: MODEL,
-    max_tokens: 16000,
-    system: SYSTEM,
-    thinking: { type: 'adaptive' },
-    output_config: {
-      effort: 'medium',
-      format: zodOutputFormat(RecipeSchema)
-    },
-    messages: [{ role: 'user', content: buildUserMessage({ caption, handle, existingTags, previousError }) }]
+    contents: buildUserMessage({ caption, handle, existingTags, previousError }),
+    config: {
+      systemInstruction: SYSTEM,
+      responseMimeType: 'application/json',
+      responseJsonSchema: RESPONSE_SCHEMA
+    }
   })
 
   reportUsage(response)
 
-  if (response.stop_reason === 'refusal') {
-    throw new Error(`The model declined to process this caption (${response.stop_details?.category ?? 'unknown'})`)
-  }
-  if (!response.parsed_output) {
-    throw new Error('The model returned no structured output')
+  const text = response.text
+  if (!text) throw new Error('The model returned no output')
+
+  // Gemini constrains the response to the schema but does not guarantee it.
+  const parsed = RecipeSchema.safeParse(JSON.parse(text))
+  if (!parsed.success) {
+    throw new SchemaError(`the recipe did not fit the schema: ${parsed.error.message}`)
   }
 
-  return response.parsed_output
+  return parsed.data
 }
