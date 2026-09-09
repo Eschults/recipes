@@ -34,9 +34,15 @@ concurrency:
 jobs:
   add-recipe:
     name: Write the recipe and open a pull request
+    # Every run costs money, so the issue author has to be someone with write
+    # access. Without this the gate is incidental rather than chosen: it holds
+    # only for as long as the issue form declines to label a stranger's issue,
+    # which is not a promise GitHub makes. workflow_dispatch needs no check of
+    # its own, since running a workflow by hand already requires write access.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.label.name == 'add-recipe'
+      (github.event.label.name == 'add-recipe' &&
+       contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.issue.author_association))
     runs-on: ubuntu-latest
 
     steps:
