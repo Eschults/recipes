@@ -58,6 +58,41 @@ validates every `recipes/**/recipe.md` file on push and pull request using the
 [`recipemd`](https://pypi.org/project/recipemd/) Python package, so a malformed recipe
 fails CI instead of silently breaking Cookbook.
 
+## Adding a recipe from a caption
+
+Most recipes here start life as a post someone wrote for Instagram. Rather than reformat
+one by hand, open an [**Ajouter une recette**](../../issues/new?template=add-recipe.yml)
+issue, paste the caption, and a pull request appears with the recipe in RecipeMD.
+
+| Field | |
+| --- | --- |
+| **Caption** | The post text, pasted as-is. Promotional lines, hashtags and mentions are dropped for you. |
+| **Source URL** | Optional. Tracking parameters are stripped before it becomes the recipe's source line. |
+| **Instagram handle** | Optional, and appended to the directory name: `louloukitchen_` turns `poulet-roti` into `poulet-roti-louloukitchen`. Instagram share links do not carry the handle, which is why it needs its own field. |
+
+The model never writes RecipeMD. It fills in a schema, and
+[`scripts/add-recipe/render.js`](scripts/add-recipe/render.js) turns that into markdown,
+so a malformed document is not a failure mode it can reach. The result is parsed back
+with Cookbook's own parser and re-rendered; if those two disagree the run fails rather
+than committing a recipe that quietly lost an ingredient. The reference Python parser
+then checks it once more before the pull request opens.
+
+Nothing reaches the collection unreviewed: the workflow only ever opens a pull request.
+
+Running it locally needs `ANTHROPIC_API_KEY` and a checkout of
+[Cookbook](https://github.com/Eschults/cookbook) beside this repository (or `COOKBOOK_DIR`
+pointing at one):
+
+```bash
+npm install
+npm test
+npm run add-recipe -- --body-file request.md --dry-run
+```
+
+`npm test` is the part worth knowing about: it parses every recipe in the collection,
+re-renders it and parses it again, so a change to the renderer that would corrupt an
+existing recipe fails before it can be used to write a new one.
+
 ## Using this with your own Cookbook
 
 This repository and [Cookbook](https://github.com/ssaunier/cookbook) are independent:
