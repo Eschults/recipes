@@ -31,7 +31,7 @@ const InstructionGroup = z.object({
   steps: z.array(z.string())
 })
 
-export const RecipeSchema = z.object({
+const RecipeSchema = z.object({
   title: z.string().describe('Two to four words naming the dish. Not the caption\'s opening sentence.'),
   description: z.string().nullable().describe('One short line of context, or null.'),
   tags: z.array(z.string()),

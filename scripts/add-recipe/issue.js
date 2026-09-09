@@ -8,7 +8,7 @@
  */
 
 /** Must match the `label:` values in .github/ISSUE_TEMPLATE/add-recipe.yml. */
-export const FIELDS = {
+const FIELDS = {
   caption: 'Caption',
   url: 'Source URL',
   handle: 'Instagram handle'

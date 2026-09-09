@@ -24,7 +24,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const recipesDir = path.join(repoRoot, 'recipes')
 
 /** Tags the collection already uses, so the model reaches for those first. */
-export function collectExistingTags(directory = recipesDir) {
+function collectExistingTags(directory = recipesDir) {
   const tags = new Set()
 
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -52,7 +52,7 @@ function sourcesFor(url, handle) {
  * Render, then prove the rendering survives a trip through the parser.
  * @returns {string} the document to write
  */
-export function renderAndVerify(data) {
+function renderAndVerify(data) {
   const markdown = renderRecipeMD(data)
   const rerendered = renderRecipeMD(parseToData(markdown))
 
@@ -70,7 +70,7 @@ function readIssueBody(argv) {
   throw new Error('Provide the issue body through ISSUE_BODY or --body-file')
 }
 
-export async function run(argv = process.argv.slice(2)) {
+async function run(argv = process.argv.slice(2)) {
   const dryRun = argv.includes('--dry-run')
   const { caption, url, handle } = parseIssueBody(readIssueBody(argv))
   const existingTags = collectExistingTags()

@@ -20,7 +20,7 @@ const FRACTIONS = [
  * else falls back to a decimal. Mixed numbers ("1 1/2") are deliberately not
  * produced: they parse, but the decimal is unambiguous and round-trips.
  */
-export function formatFactor(value) {
+function formatFactor(value) {
   if (Number.isInteger(value)) return String(value)
 
   if (Math.abs(value) < 1) {
@@ -32,7 +32,7 @@ export function formatFactor(value) {
   return String(Number(value.toFixed(4)))
 }
 
-export function formatAmount(amount) {
+function formatAmount(amount) {
   if (!amount) return ''
   return amount.unit ? `${formatFactor(amount.factor)} ${amount.unit}` : formatFactor(amount.factor)
 }

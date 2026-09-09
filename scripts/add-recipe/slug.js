@@ -9,7 +9,7 @@
  */
 
 /** Drop accents so "Pâte à tartiner" can become "pate-a-tartiner". */
-export function deaccent(text) {
+function deaccent(text) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
