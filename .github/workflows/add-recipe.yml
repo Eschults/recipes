@@ -93,10 +93,12 @@ jobs:
           COOKBOOK_DIR: ${{ github.workspace }}/cookbook
         run: npm run add-recipe -- --body-file request.md
 
-      # validate.yml cannot help here: a push or pull request made with
-      # GITHUB_TOKEN does not trigger other workflows, so the reference parser
-      # has to run inside this job to be a gate at all. It is the same action
-      # validate.yml uses, so the two checks cannot drift apart.
+      # validate.yml does get a run on the pull request this job opens, but
+      # that run is created and then held until a human approves it, so it is
+      # not an automatic gate. This is, and running it before the pull request
+      # exists means a recipe that does not parse fails the run instead of
+      # becoming a pull request to clean up. It is the same action validate.yml
+      # uses, so the two checks cannot drift apart.
       - name: Validate with the reference parser
         uses: ./.github/actions/validate-recipemd
         with:
