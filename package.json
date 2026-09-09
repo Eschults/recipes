@@ -1,0 +1,14 @@
+{
+  "name": "recipes-tooling",
+  "private": true,
+  "type": "module",
+  "description": "Tooling that turns a pasted recipe caption into a RecipeMD document.",
+  "scripts": {
+    "test": "node --test",
+    "add-recipe": "node scripts/add-recipe/main.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
+    "zod": "^4.5.4"
+  }
+}
