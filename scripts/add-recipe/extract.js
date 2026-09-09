@@ -6,42 +6,11 @@
  * can reach - only wrong content is, and wrong content is reviewable in a
  * pull request.
  */
-import { ApiError, GoogleGenAI } from '@google/genai'
+import { GoogleGenAI } from '@google/genai'
 import { z } from 'zod'
 
-/** The model answered, but not with a recipe. Worth another attempt. */
+/** The model answered, but not with a recipe. The caller retries these. */
 export class SchemaError extends Error {}
-
-/**
- * Capacity and quota, not correctness. The free tier makes no capacity
- * promise and returns 503 when the model is busy, which two consecutive
- * attempts hit while this was being written, so waiting and retrying is part
- * of using it rather than an edge case.
- */
-const TRANSIENT_STATUSES = new Set([429, 500, 502, 503, 504])
-const BACKOFF_MS = [2_000, 8_000, 20_000]
-
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
-
-/** RECIPE_THINKING_BUDGET opts in, for a model where it is worth setting. */
-function thinkingBudget() {
-  const budget = process.env.RECIPE_THINKING_BUDGET
-  return budget ? { thinkingConfig: { thinkingBudget: Number(budget) } } : {}
-}
-
-async function generateWithRetry(genai, request) {
-  for (let attempt = 0; ; attempt += 1) {
-    try {
-      return await genai.models.generateContent(request)
-    } catch (error) {
-      const transient = error instanceof ApiError && TRANSIENT_STATUSES.has(error.status)
-      if (!transient || attempt >= BACKOFF_MS.length) throw error
-
-      console.error(`${MODEL}: ${error.status}, retrying in ${BACKOFF_MS[attempt] / 1000}s`)
-      await sleep(BACKOFF_MS[attempt])
-    }
-  }
-}
 
 const Amount = z.object({
   factor: z.number().describe('The numeric quantity, e.g. 250 for "250 g".'),
@@ -74,26 +43,12 @@ const RecipeSchema = z.object({
   instructionGroups: z.array(InstructionGroup)
 })
 
-// RECIPE_MODEL overrides this, so another model can be tried against a real
-// caption without editing code.
-// gemini-3.5-flash-lite rather than the newest model: 3.8 Flash returned 503
-// on every attempt, and this is the one verified end to end against a real
-// caption. RECIPE_MODEL moves it without a code change.
+// 3.8 Flash returned 503 on every attempt; this one is verified end to end.
 const MODEL = process.env.RECIPE_MODEL || 'gemini-3.5-flash-lite'
 
-/**
- * Gemini takes a subset of JSON Schema, so the zod schema above stays the one
- * definition and this is derived from it. Deriving rather than hand-writing a
- * second copy is what stops the two from disagreeing about what a recipe is.
- */
 const RESPONSE_SCHEMA = toGeminiSchema(z.toJSONSchema(RecipeSchema))
 
-/**
- * Gemini documents a subset of JSON Schema. Two things zod emits are not in
- * it: the `$schema` key, and a nullable field written as `type: [T, "null"]`.
- * `anyOf` is documented as supported, so the union is rewritten that way
- * rather than left in the array form and hoped for.
- */
+/** Gemini takes a subset of JSON Schema: no `$schema`, no `type: [T, "null"]`. */
 function toGeminiSchema(node) {
   if (Array.isArray(node)) return node.map(toGeminiSchema)
   if (!node || typeof node !== 'object') return node
@@ -147,11 +102,7 @@ function buildUserMessage({ caption, handle, existingTags, previousError }) {
   return parts.join('\n\n')
 }
 
-/**
- * The free tier costs nothing, so this reports tokens rather than money. It
- * still matters: the daily quota is counted in requests and tokens, and a
- * caption that suddenly costs ten times as much is worth noticing.
- */
+/** Tokens rather than money: the free tier's quota is what runs out. */
 function reportUsage(response) {
   const usage = response.usageMetadata ?? {}
   const thoughts = usage.thoughtsTokenCount ? `, ${usage.thoughtsTokenCount} thinking` : ''
@@ -162,10 +113,6 @@ function reportUsage(response) {
   )
 }
 
-/**
- * @param {{caption: string, handle?: string, existingTags?: string[],
- *   previousError?: string, client?: Anthropic}} options
- */
 export async function extractRecipe({ caption, handle = '', existingTags = [], previousError = '', client }) {
   if (!caption.trim()) throw new Error('The caption is empty, so there is nothing to extract')
 
@@ -175,18 +122,13 @@ export async function extractRecipe({ caption, handle = '', existingTags = [], p
 
   const genai = client ?? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
-  const response = await generateWithRetry(genai, {
+  const response = await genai.models.generateContent({
     model: MODEL,
     contents: buildUserMessage({ caption, handle, existingTags, previousError }),
     config: {
       systemInstruction: SYSTEM,
       responseMimeType: 'application/json',
-      responseJsonSchema: RESPONSE_SCHEMA,
-      // Thinking support and its allowed budgets vary by model, and sending a
-      // config a model does not accept is a hard 400 while omitting it is
-      // always valid. Extraction from a caption is bounded work, so the
-      // default is to say nothing and take whatever the model does.
-      ...thinkingBudget()
+      responseJsonSchema: RESPONSE_SCHEMA
     }
   })
 
@@ -195,9 +137,7 @@ export async function extractRecipe({ caption, handle = '', existingTags = [], p
   const text = response.text
   if (!text) throw new Error('The model returned no output')
 
-  // Gemini constrains the response to the schema but does not guarantee it the
-  // way a strict tool call does, so the shape is checked here rather than
-  // trusted. A mismatch reads as a RecipeMDError-shaped retry to the caller.
+  // Gemini constrains the response to the schema but does not guarantee it.
   const parsed = RecipeSchema.safeParse(JSON.parse(text))
   if (!parsed.success) {
     throw new SchemaError(`the recipe did not fit the schema: ${parsed.error.message}`)
