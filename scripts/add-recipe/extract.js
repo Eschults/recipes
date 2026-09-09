@@ -41,6 +41,10 @@ const RecipeSchema = z.object({
   instructionGroups: z.array(InstructionGroup)
 })
 
+// RECIPE_MODEL overrides this, so a cheaper model can be tried against a real
+// caption without editing code.
+const MODEL = process.env.RECIPE_MODEL || 'claude-sonnet-5'
+
 const SYSTEM = `Tu transformes la légende d'une publication de cuisine en une fiche recette structurée, destinée à une collection personnelle rédigée entièrement en français.
 
 Règles de contenu:
@@ -75,6 +79,28 @@ function buildUserMessage({ caption, handle, existingTags, previousError }) {
 }
 
 /**
+ * Indicative per-million-token prices, so a run says what it cost instead of
+ * turning up on a bill later. Thinking is billed as output, which is what
+ * makes the output side dominate here.
+ */
+const PRICES = {
+  'claude-opus-5': { input: 5, output: 25 },
+  'claude-sonnet-5': { input: 3, output: 15 },
+  'claude-haiku-4-5': { input: 1, output: 5 }
+}
+
+function reportUsage(response) {
+  const { input_tokens: input = 0, output_tokens: output = 0 } = response.usage ?? {}
+  const price = PRICES[response.model] ?? PRICES[MODEL]
+
+  const cost = price
+    ? ` = $${((input * price.input + output * price.output) / 1e6).toFixed(4)}`
+    : ''
+
+  console.error(`${response.model}: ${input} in, ${output} out${cost}`)
+}
+
+/**
  * @param {{caption: string, handle?: string, existingTags?: string[],
  *   previousError?: string, client?: Anthropic}} options
  */
@@ -84,7 +110,7 @@ export async function extractRecipe({ caption, handle = '', existingTags = [], p
   const anthropic = client ?? new Anthropic()
 
   const response = await anthropic.messages.parse({
-    model: 'claude-opus-5',
+    model: MODEL,
     max_tokens: 16000,
     system: SYSTEM,
     thinking: { type: 'adaptive' },
@@ -94,6 +120,8 @@ export async function extractRecipe({ caption, handle = '', existingTags = [], p
     },
     messages: [{ role: 'user', content: buildUserMessage({ caption, handle, existingTags, previousError }) }]
   })
+
+  reportUsage(response)
 
   if (response.stop_reason === 'refusal') {
     throw new Error(`The model declined to process this caption (${response.stop_details?.category ?? 'unknown'})`)
