@@ -124,7 +124,7 @@ jobs:
           if [ -n "$ISSUE_NUMBER" ]; then
             body="$body
 
-          Fixes #$ISSUE_NUMBER"
+          Closes #$ISSUE_NUMBER"
           fi
 
           url=$(gh pr create --base main --head "add-recipe/$SLUG" --title "Ajouter $TITLE" --body "$body")
