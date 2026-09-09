@@ -32,4 +32,4 @@ npm run add-recipe -- --body-file request.md --dry-run
 
 ## License
 
-[MIT](LICENSE) © Sébastien Saunier, which is what lets this fork exist and covers the tooling added to it. The recipes themselves are not necessarily mine to redistribute: check with [ssaunier](https://github.com/ssaunier) first if you would like to reuse one beyond personal use.
+[MIT](LICENSE) © Sébastien Saunier, which is what lets this fork exist and covers the tooling added to it. On reusing the recipes themselves, see [the upstream README](https://github.com/ssaunier/recipes#license).
