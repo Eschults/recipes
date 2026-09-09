@@ -1,0 +1,47 @@
+name: Ajouter une recette
+description: Coller la légende d'une publication pour en tirer une recette au format RecipeMD.
+title: "Ajouter une recette : "
+labels: ["add-recipe"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Coller la légende telle quelle. Le texte promotionnel, les hashtags et les
+        mentions sont retirés automatiquement ; inutile de nettoyer quoi que ce soit.
+
+        Une pull request est ouverte avec la recette. Rien n'est ajouté à la collection
+        avant qu'elle soit relue et fusionnée.
+
+  - type: textarea
+    id: caption
+    attributes:
+      label: Caption
+      description: La légende complète de la publication.
+      placeholder: |
+        Ingrédients :
+        • 4 cuisses de poulet
+        • 3 carottes
+        ...
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Source URL
+      description: Le lien vers la publication. Les paramètres de suivi sont retirés.
+      placeholder: https://www.instagram.com/reel/XXXXXXXXXXX/
+    validations:
+      required: false
+
+  - type: input
+    id: handle
+    attributes:
+      label: Instagram handle
+      description: >-
+        Le compte à l'origine de la recette. Les liens de partage Instagram ne le
+        contiennent pas, d'où ce champ. Il est ajouté au nom du dossier, donc à l'URL
+        de la recette : « louloukitchen_ » donne « poulet-roti-louloukitchen ».
+      placeholder: louloukitchen_
+    validations:
+      required: false
