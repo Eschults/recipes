@@ -20,7 +20,7 @@ The model never writes RecipeMD. It fills in a schema, and [`scripts/add-recipe/
 
 Nothing reaches the collection unreviewed: the workflow only ever opens a pull request.
 
-Running it locally needs `ANTHROPIC_API_KEY` and a checkout of [Cookbook](https://github.com/Eschults/cookbook) beside this repository, or `COOKBOOK_DIR` pointing at one:
+Running it locally needs an `ANTHROPIC_API_KEY` in `.env` (copy `.env.example`) and a checkout of [Cookbook](https://github.com/Eschults/cookbook) beside this repository, or `COOKBOOK_DIR` pointing at one. `request.md` holds a pasted caption in the same shape the issue form produces, and `--dry-run` prints the recipe instead of writing it:
 
 ```bash
 npm install

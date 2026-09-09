@@ -5,7 +5,7 @@
   "description": "Tooling that turns a pasted recipe caption into a RecipeMD document.",
   "scripts": {
     "test": "node --test",
-    "add-recipe": "node scripts/add-recipe/main.js"
+    "add-recipe": "node --env-file-if-exists=.env scripts/add-recipe/main.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",

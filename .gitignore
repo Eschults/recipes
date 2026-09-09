@@ -1,1 +1,6 @@
 node_modules/
+
+# Secrets, and the scratch file the CLI reads a caption from.
+.env
+.env.local
+request.md
