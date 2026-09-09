@@ -83,28 +83,14 @@ jobs:
           COOKBOOK_DIR: ${{ github.workspace }}/cookbook
         run: npm run add-recipe -- --body-file request.md
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
       # validate.yml cannot help here: a push or pull request made with
       # GITHUB_TOKEN does not trigger other workflows, so the reference parser
-      # has to run inside this job to be a gate at all.
+      # has to run inside this job to be a gate at all. It is the same action
+      # validate.yml uses, so the two checks cannot drift apart.
       - name: Validate with the reference parser
-        env:
-          RECIPE_PATH: ${{ steps.recipe.outputs.path }}
-        run: |
-          python -m pip install --upgrade pip recipemd
-          python - "$RECIPE_PATH" <<'PY'
-          import sys
-          from recipemd.data import RecipeParser
-
-          with open(sys.argv[1], encoding="UTF-8") as handle:
-              RecipeParser().parse(handle.read())
-
-          print(f"{sys.argv[1]}: valid RecipeMD")
-          PY
+        uses: ./.github/actions/validate-recipemd
+        with:
+          path: ${{ steps.recipe.outputs.path }}
 
       - name: Open a pull request
         id: pull-request
