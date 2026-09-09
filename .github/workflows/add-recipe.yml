@@ -4,9 +4,13 @@ name: Add a recipe from a caption
 # caption is many lines long. workflow_dispatch is kept for the command line,
 # where multi-line values pass fine through the API even though the web form
 # renders a single-line box.
+#
+# `labeled` only, never `opened`: the issue form applies the label as it
+# creates the issue, so listening for both ran everything twice. Labelling by
+# hand afterwards is also a valid way in, and this covers it.
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
   workflow_dispatch:
     inputs:
       caption:
@@ -32,7 +36,7 @@ jobs:
     name: Write the recipe and open a pull request
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.issue.labels.*.name, 'add-recipe')
+      github.event.label.name == 'add-recipe'
     runs-on: ubuntu-latest
 
     steps:
@@ -106,13 +110,13 @@ jobs:
           git checkout -b "add-recipe/$SLUG"
           git add "$RECIPE_PATH"
           git commit -m "Ajouter $TITLE"
-          git push --set-upstream origin "add-recipe/$SLUG"
+          git push --force --set-upstream origin "add-recipe/$SLUG"
 
           body="Recette écrite à partir d'une légende, à relire avant fusion."
           if [ -n "$ISSUE_NUMBER" ]; then
             body="$body
 
-          Closes #$ISSUE_NUMBER"
+          Fixes #$ISSUE_NUMBER"
           fi
 
           url=$(gh pr create --base main --head "add-recipe/$SLUG" --title "Ajouter $TITLE" --body "$body")
