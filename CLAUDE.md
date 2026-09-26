@@ -6,3 +6,5 @@
 - No emojis or em-dashes.
 - Do not guess APIs, versions, flags, commit SHAs, or package names. Verify by reading code or docs before asserting.
 - Do not add mid-sentence linebreaks.
+
+@.claude/harness-rules.md
