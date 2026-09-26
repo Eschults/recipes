@@ -1,0 +1,99 @@
+# Turns "issue labeled claude" into a Claude Code cloud session.
+#
+# Routine GitHub triggers only fire on pull_request and release events, so
+# a routine cannot subscribe to issue events itself. This workflow is the
+# adapter: it POSTs to the routine's API trigger, which a plain GitHub
+# webhook cannot do because webhooks cannot send an Authorization header.
+#
+# No Claude runs here. The session runs on Anthropic's infrastructure,
+# clones the repo, and opens the PR. This job rings the doorbell.
+
+name: Claude
+
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: claude-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  fire:
+    if: github.event.label.name == 'claude'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      # The payload only names the issue; the session reads it with gh, so
+      # no attacker-controlled text lands inside the prompt.
+      - name: Fire the routine
+        id: fire
+        env:
+          ROUTINE_ID: ${{ vars.CLAUDE_ROUTINE_ID }}
+          ROUTINE_TOKEN: ${{ secrets.CLAUDE_ROUTINE_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ROUTINE_ID:-}" ] || [ -z "${ROUTINE_TOKEN:-}" ]; then
+            echo "::error::CLAUDE_ROUTINE_ID or CLAUDE_ROUTINE_TOKEN is empty. See README.md."
+            exit 1
+          fi
+
+          text=$(printf 'Repository: %s\nIssue: #%s\nURL: %s\n' "$GITHUB_REPOSITORY" "$ISSUE_NUMBER" "$ISSUE_URL")
+
+          # No --retry: the POST is not idempotent, a re-send starts a second session.
+          response="$RUNNER_TEMP/fire.json"
+          status=$(curl -sS -o "$response" -w '%{http_code}' --max-time 60 \
+            -X POST "https://api.anthropic.com/v1/claude_code/routines/${ROUTINE_ID}/fire" \
+            -H "Authorization: Bearer ${ROUTINE_TOKEN}" \
+            -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg text "$text" '{text: $text}')")
+
+          if [ "$status" -ge 300 ]; then
+            # Error bodies name the reason (bad token, revoked trigger, daily
+            # routine cap reached) and contain no secrets.
+            echo "::error::Routine fire failed with HTTP $status"
+            jq . "$response" 2>/dev/null || cat "$response"
+            exit 1
+          fi
+
+          session_url=$(jq -r '.claude_code_session_url // empty' "$response")
+
+          if [ -z "$session_url" ]; then
+            echo "::error::Routine fire returned no session URL"
+            cat "$response"
+            exit 1
+          fi
+
+          echo "session-url=$session_url" >> "$GITHUB_OUTPUT"
+
+      # The session outlives this job, so the issue is the only place a human
+      # reliably finds it. A stalled `claude` label that nobody knows about is
+      # the worst failure mode this harness has, so report both outcomes.
+      - name: Link the session on the issue
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          SESSION_URL: ${{ steps.fire.outputs.session-url }}
+        run: |
+          body=$(printf '%s\n' "Claude is looking into it :point_right: $SESSION_URL incoming PR :hourglass_flowing_sand:")
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$body"
+
+      - name: Report the failure on the issue
+        if: failure() && steps.fire.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body=$(printf '%s\n\n%s\n' \
+            "Failed to start a Claude Code session. Nothing is working on this issue. Details: $RUN_URL" \
+            "Remove and re-apply the \`claude\` label to retry.")
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$body"

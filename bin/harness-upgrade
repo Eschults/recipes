@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Checks for a newer harness release and, on confirmation, pulls the
+# updated harness files in from the `v1` tag. Safe to re-run: it's a
+# no-op once you're on the latest release.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+src=${HARNESS_SRC:-https://raw.githubusercontent.com/Eschults/harness/v1}
+# shellcheck source=bin/lib/fetch-files.sh
+source bin/lib/fetch-files.sh
+
+current=$(cat .claude/HARNESS_VERSION 2>/dev/null || true)
+if [ -z "$current" ]; then
+  echo "No .claude/HARNESS_VERSION found; run bin/harness-install first." >&2
+  exit 1
+fi
+
+tags_url=${HARNESS_TAGS_URL:-https://api.github.com/repos/Eschults/harness/tags}
+# grep matching nothing is fine; pipefail would otherwise abort with no message.
+latest=$(curl -fsSL "$tags_url" | jq -r '.[].name' | { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -1)
+
+if [ -z "$latest" ]; then
+  echo "No release tag matching vX.Y.Z found at $tags_url" >&2
+  exit 1
+fi
+
+if [ "$current" = "$latest" ]; then
+  echo "Already up to date: $current"
+  exit 0
+fi
+
+compare="https://github.com/Eschults/harness/compare/$current...$latest"
+echo "Upgrading $current -> $latest: $compare"
+open "$compare" 2>/dev/null || xdg-open "$compare" 2>/dev/null || true
+
+read -rp "Pull in $latest now? [y/N] " confirm
+if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+  echo "Skipped. Re-run bin/harness-upgrade when you're ready."
+  exit 0
+fi
+
+fetch_harness_files
+curl -fsSL "$src/bin/lib/fetch-files.sh" -o bin/lib/fetch-files.sh
+
+# Downloaded to a temp file and moved into place, never written to directly:
+# this script is still running from bin/harness-upgrade, and overwriting that
+# file in place mid-run corrupts the running process.
+curl -fsSL "$src/bin/harness-upgrade" -o bin/harness-upgrade.new
+chmod +x bin/harness-upgrade.new
+mv bin/harness-upgrade.new bin/harness-upgrade
+
+echo "Pulled in $latest. Review the diff and commit."
