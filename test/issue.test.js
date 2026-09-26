@@ -34,3 +34,12 @@ test('cleanSourceUrl keeps a URL it cannot parse', () => {
   assert.equal(cleanSourceUrl('not a url'), 'not a url')
   assert.equal(cleanSourceUrl(''), '')
 })
+
+test('a form with only the post URL reads as a request with no caption', () => {
+  const urlOnly = ['### Source URL', '', 'https://www.instagram.com/p/DTest/?igsh=abc'].join('\n')
+  assert.deepEqual(parseIssueBody(urlOnly), {
+    caption: '',
+    url: 'https://www.instagram.com/p/DTest/',
+    handle: ''
+  })
+})

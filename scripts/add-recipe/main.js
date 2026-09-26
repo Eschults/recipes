@@ -13,6 +13,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { RecipeMDError } from './cookbook.js'
 import { SchemaError, extractRecipe } from './extract.js'
+import { withCaption } from './instagram.js'
 import { parseIssueBody } from './issue.js'
 import { parseToData } from './parse.js'
 import { renderRecipeMD } from './render.js'
@@ -72,7 +73,7 @@ function readIssueBody(argv) {
 
 async function run(argv = process.argv.slice(2)) {
   const dryRun = argv.includes('--dry-run')
-  const { caption, url, handle } = parseIssueBody(readIssueBody(argv))
+  const { caption, url, handle } = await withCaption(parseIssueBody(readIssueBody(argv)))
   const existingTags = collectExistingTags()
 
   let markdown = null

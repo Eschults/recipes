@@ -44,7 +44,7 @@ const RecipeSchema = z.object({
 })
 
 // 3.8 Flash returned 503 on every attempt; this one is verified end to end.
-const MODEL = process.env.RECIPE_MODEL || 'gemini-3.5-flash-lite'
+export const MODEL = process.env.RECIPE_MODEL || 'gemini-3.5-flash-lite'
 
 const RESPONSE_SCHEMA = toGeminiSchema(z.toJSONSchema(RecipeSchema))
 
@@ -103,7 +103,7 @@ function buildUserMessage({ caption, handle, existingTags, previousError }) {
 }
 
 /** Tokens rather than money: the free tier's quota is what runs out. */
-function reportUsage(response) {
+export function reportUsage(response) {
   const usage = response.usageMetadata ?? {}
   const thoughts = usage.thoughtsTokenCount ? `, ${usage.thoughtsTokenCount} thinking` : ''
 

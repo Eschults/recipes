@@ -6,21 +6,19 @@ They are served at [cookbook.eschults.org](https://cookbook.eschults.org) by [Es
 
 Everything below is specific to this fork.
 
-## Adding a recipe from a caption
+## Adding a recipe from a post
 
-Most recipes here start life as a post someone wrote for Instagram. Rather than reformat one by hand, open an [**Ajouter une recette**](../../issues/new?template=add-recipe.yml) issue, paste the caption, and a pull request appears with the recipe in RecipeMD.
+Most recipes here start life as a post someone wrote for Instagram, and Instagram does not let a phone copy a caption. So open an [**Ajouter une recette**](../../issues/new?template=add-recipe.yml) issue, paste the post's link, and a pull request appears with the recipe in RecipeMD.
 
-| Field | |
-| --- | --- |
-| **Caption** | The post text, pasted as-is. Promotional lines, hashtags and mentions are dropped for you. |
-| **Source URL** | Optional. Tracking parameters are stripped before it becomes the recipe's source line. |
-| **Instagram handle** | Optional, and appended to the directory name: `louloukitchen_` turns `poulet-roti` into `poulet-roti-louloukitchen`. Instagram share links do not carry the handle, which is why it needs its own field. |
+Gemini reads the post through its URL context tool and returns the caption and the account that posted it. Tracking parameters are stripped from the link before it becomes the recipe's source line, the handle is appended to the directory name (`louloukitchen_` turns `poulet-roti` into `poulet-roti-louloukitchen`), and promotional lines, hashtags and mentions are dropped from the caption. If Gemini reports that it could not retrieve the post, the run fails rather than trusting a caption it may have made up.
+
+For a post Gemini cannot read, run the workflow by hand from the Actions tab and paste the caption into its `caption` input: a caption given directly skips the fetch.
 
 The model never writes RecipeMD. It fills in a schema, and [`scripts/add-recipe/render.js`](scripts/add-recipe/render.js) turns that into markdown, so a malformed document is not a failure mode it can reach. The result is parsed back with Cookbook's own parser and re-rendered; if those two disagree the run fails rather than committing a recipe that quietly lost an ingredient. The reference Python parser then checks it once more before the pull request opens.
 
 Nothing reaches the collection unreviewed: the workflow only ever opens a pull request.
 
-Running it locally needs a `GEMINI_API_KEY` in `.env` (copy `.env.example`) and a checkout of [Cookbook](https://github.com/Eschults/cookbook) beside this repository, or `COOKBOOK_DIR` pointing at one. `request.md` holds a pasted caption in the same shape the issue form produces, and `--dry-run` prints the recipe instead of writing it:
+Running it locally needs a `GEMINI_API_KEY` in `.env` (copy `.env.example`) and a checkout of [Cookbook](https://github.com/Eschults/cookbook) beside this repository, or `COOKBOOK_DIR` pointing at one. `request.md` holds a request in the same shape the issue form produces (a `### Caption` section skips the fetch), and `--dry-run` prints the recipe instead of writing it:
 
 ```bash
 npm install
