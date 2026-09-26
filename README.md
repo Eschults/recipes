@@ -18,10 +18,11 @@ The model never writes RecipeMD. It fills in a schema, and [`scripts/add-recipe/
 
 Nothing reaches the collection unreviewed: the workflow only ever opens a pull request.
 
-Running it locally needs a `GEMINI_API_KEY` in `.env` (copy `.env.example`) and a checkout of [Cookbook](https://github.com/Eschults/cookbook) beside this repository, or `COOKBOOK_DIR` pointing at one. `npm install` also downloads the browser Playwright drives, which only needs doing once. `request.md` holds a request in the same shape the issue form produces (a `### Caption` section skips the fetch), and `--dry-run` prints the recipe instead of writing it:
+Running it locally needs a `GEMINI_API_KEY` in `.env` (copy `.env.example`) and a checkout of [Cookbook](https://github.com/Eschults/cookbook) beside this repository, or `COOKBOOK_DIR` pointing at one. Reading a caption from a post also needs the browser Playwright drives, which `npx playwright install chromium` downloads once. `request.md` holds a request in the same shape the issue form produces (a `### Caption` section skips the fetch), and `--dry-run` prints the recipe instead of writing it:
 
 ```bash
 npm install
+npx playwright install chromium
 npm test
 npm run add-recipe -- --body-file request.md --dry-run
 ```
