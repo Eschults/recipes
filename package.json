@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.21.0",
+    "playwright": "^1.63.0",
     "zod": "^4.5.4"
   }
 }

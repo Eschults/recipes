@@ -65,6 +65,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          # Only Chromium is used; the next step fetches just that one, with
+          # the system libraries it needs to actually launch headless.
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
 
       # The issue body is untrusted input, so it reaches the script through a
       # file and an environment variable, never through the shell.

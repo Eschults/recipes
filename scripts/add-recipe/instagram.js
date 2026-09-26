@@ -1,74 +1,61 @@
 /**
  * Post URL in, caption out.
  *
- * Instagram does not let a phone copy a caption, so the issue form asks for
- * the link alone and Gemini reads the post through its URL context tool. The
- * retrieval status is checked before the answer is trusted: when the fetch
- * fails, a model asked for a caption will happily write a plausible one.
+ * The caption never appears in the page Instagram sends over the wire: it is
+ * filled in by client-side JavaScript once the page has loaded, so a plain
+ * HTTP fetch sees an empty shell. A headless browser runs that JavaScript
+ * and reads the result, the same way Instagram tells search engines and link
+ * previews what the post says: through its `og:description` meta tag, which
+ * needs no login and carries the caption whole.
  */
-import { GoogleGenAI, UrlRetrievalStatus } from '@google/genai'
-import { MODEL, reportUsage } from './extract.js'
+import { chromium } from 'playwright'
 
-const PROMPT = `Lis la publication Instagram à cette adresse et renvoie uniquement un objet JSON de la forme {"handle": "...", "caption": "..."}.
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
-- "caption" est la légende complète, recopiée mot pour mot, sans rien résumer, traduire ni corriger.
-- "handle" est le nom du compte qui a publié, sans le @.
-- Si la page ne montre pas la légende, renvoie une chaîne vide pour "caption". N'écris jamais une légende de mémoire.
+/**
+ * Instagram writes this as `12K likes, 34 comments - handle on 24 September
+ * 2026: "caption text".` The caption is quoted, so it is read as everything
+ * between the first and last quote rather than split on ": ", which the
+ * caption itself is free to contain.
+ */
+export function parseOgDescription(description) {
+  const text = String(description ?? '')
+  const first = text.indexOf('"')
+  const last = text.lastIndexOf('"')
+  if (first === -1 || last <= first) return { caption: '', handle: '' }
 
-Adresse: `
+  const before = text.slice(0, first)
+  const handle = before.match(/(\S+)\s+on\s+[^:]+:\s*$/)?.[1] ?? ''
 
-export function parseCaptionAnswer(text) {
-  const json = String(text ?? '').match(/\{[\s\S]*\}/)
-  if (!json) return { caption: '', handle: '' }
+  return { caption: text.slice(first + 1, last).trim(), handle }
+}
+
+async function readOgDescription(url, launch) {
+  const browser = await launch()
 
   try {
-    const { caption, handle } = JSON.parse(json[0])
-    return {
-      caption: typeof caption === 'string' ? caption.trim() : '',
-      handle: typeof handle === 'string' ? handle.trim().replace(/^@/, '') : ''
-    }
-  } catch {
-    return { caption: '', handle: '' }
+    const context = await browser.newContext({ userAgent: USER_AGENT })
+    const page = await context.newPage()
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
+    return await page.$eval('meta[property="og:description"]', element => element.content).catch(() => null)
+  } finally {
+    await browser.close()
   }
 }
 
-function retrievalFailure(response, url) {
-  const retrievals = response.candidates?.[0]?.urlContextMetadata?.urlMetadata ?? []
-  if (retrievals.some(entry => entry.urlRetrievalStatus === UrlRetrievalStatus.URL_RETRIEVAL_STATUS_SUCCESS)) {
-    return null
-  }
-
-  const statuses = retrievals.map(entry => entry.urlRetrievalStatus).join(', ')
-  return `Gemini could not read ${url} (${statuses || 'no retrieval attempted'})`
-}
-
-export async function fetchCaption({ url, client }) {
+export async function fetchCaption({ url, launch = () => chromium.launch() }) {
   if (!url) throw new Error('The issue gives no post URL, so there is no caption to read')
 
-  if (!client && !process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not set. Put it in .env (see .env.example), or set it in the environment.')
-  }
+  const description = await readOgDescription(url, launch)
+  const answer = parseOgDescription(description)
 
-  const genai = client ?? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-
-  const response = await genai.models.generateContent({
-    model: MODEL,
-    contents: PROMPT + url,
-    config: { tools: [{ urlContext: {} }] }
-  })
-
-  reportUsage(response)
-
-  const failure = retrievalFailure(response, url)
-  if (failure) throw new Error(failure)
-
-  const answer = parseCaptionAnswer(response.text)
-  if (!answer.caption) throw new Error(`Gemini read ${url} but found no caption on it`)
+  if (!answer.caption) throw new Error(`Instagram showed no caption for ${url}`)
 
   return answer
 }
 
-/** A caption given by hand wins, so the command line still works for a post Gemini cannot read. */
+/** A caption given by hand wins, so the command line still works for a post the browser cannot read. */
 export async function withCaption(request, { fetch = fetchCaption } = {}) {
   if (request.caption) return request
 

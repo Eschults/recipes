@@ -1,65 +1,83 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { fetchCaption, parseCaptionAnswer, withCaption } from '../scripts/add-recipe/instagram.js'
+import { fetchCaption, parseOgDescription, withCaption } from '../scripts/add-recipe/instagram.js'
 
-const url = 'https://www.instagram.com/reel/Dc3tBCdhTuX/'
+const url = 'https://www.instagram.com/reel/DdrLS5ON1cI/'
 
-function fakeClient({ text, status = 'URL_RETRIEVAL_STATUS_SUCCESS' }) {
-  const calls = []
-  const client = {
-    models: {
-      async generateContent(request) {
-        calls.push(request)
-        return {
-          text,
-          candidates: [{ urlContextMetadata: { urlMetadata: status ? [{ retrievedUrl: url, urlRetrievalStatus: status }] : [] } }]
+/** Stands in for a Playwright `chromium.launch()` result, down to the calls fetchCaption makes. */
+function fakeBrowser(description) {
+  const calls = { goto: null, closed: false }
+  const browser = {
+    async newContext(options) {
+      calls.contextOptions = options
+      return {
+        async newPage() {
+          return {
+            async goto(target, options) {
+              calls.goto = { target, options }
+            },
+            async $eval(selector, fn) {
+              if (description === null) throw new Error('no such element')
+              return fn({ content: description })
+            }
+          }
         }
       }
+    },
+    async close() {
+      calls.closed = true
     }
   }
-  return { client, calls }
+  return { launch: async () => browser, calls }
 }
 
-test('fetchCaption reads the caption and the author through URL context', async () => {
-  const { client, calls } = fakeClient({ text: '{"handle": "@louloukitchen_", "caption": "Ingrédients :\\n• 3 carottes"}' })
+test('fetchCaption reads the caption and handle from og:description', async () => {
+  const { launch, calls } = fakeBrowser(
+    '60K likes, 387 comments - louloukitchen_ on September 24, 2026: "Ingrédients :\n• 3 carottes".'
+  )
 
-  assert.deepEqual(await fetchCaption({ url, client }), {
+  assert.deepEqual(await fetchCaption({ url, launch }), {
     caption: 'Ingrédients :\n• 3 carottes',
     handle: 'louloukitchen_'
   })
-  assert.deepEqual(calls[0].config.tools, [{ urlContext: {} }])
-  assert.ok(calls[0].contents.endsWith(url))
+  assert.equal(calls.goto.target, url)
+  assert.equal(calls.closed, true)
 })
 
-test('fetchCaption refuses an answer when the post could not be retrieved', async () => {
-  const { client } = fakeClient({
-    text: '{"handle": "someone", "caption": "A caption the model made up"}',
-    status: 'URL_RETRIEVAL_STATUS_ERROR'
-  })
+test('fetchCaption closes the browser even when the page has no caption', async () => {
+  const { launch, calls } = fakeBrowser(null)
 
-  await assert.rejects(fetchCaption({ url, client }), /could not read .*URL_RETRIEVAL_STATUS_ERROR/)
+  await assert.rejects(fetchCaption({ url, launch }), /showed no caption/)
+  assert.equal(calls.closed, true)
 })
 
-test('fetchCaption refuses an answer when no retrieval was attempted', async () => {
-  const { client } = fakeClient({ text: '{"handle": "someone", "caption": "Made up"}', status: null })
+test('fetchCaption fails when the description carries no quoted caption', async () => {
+  const { launch } = fakeBrowser('louloukitchen_ shared a photo.')
 
-  await assert.rejects(fetchCaption({ url, client }), /no retrieval attempted/)
-})
-
-test('fetchCaption fails when the page showed no caption', async () => {
-  const { client } = fakeClient({ text: '{"handle": "louloukitchen_", "caption": ""}' })
-
-  await assert.rejects(fetchCaption({ url, client }), /found no caption/)
+  await assert.rejects(fetchCaption({ url, launch }), /showed no caption/)
 })
 
 test('fetchCaption needs a URL', async () => {
-  await assert.rejects(fetchCaption({ url: '', client: {} }), /no post URL/)
+  await assert.rejects(fetchCaption({ url: '' }), /no post URL/)
 })
 
-test('parseCaptionAnswer tolerates a fenced answer and rejects anything else', () => {
-  assert.deepEqual(parseCaptionAnswer('```json\n{"handle": "a", "caption": "b"}\n```'), { handle: 'a', caption: 'b' })
-  assert.deepEqual(parseCaptionAnswer('Je ne peux pas lire cette page.'), { handle: '', caption: '' })
-  assert.deepEqual(parseCaptionAnswer('{not json}'), { handle: '', caption: '' })
+test('parseOgDescription handles a caption with no engagement counts', () => {
+  assert.deepEqual(
+    parseOgDescription('louloukitchen_ on September 24, 2026: "Une légende simple".'),
+    { caption: 'Une légende simple', handle: 'louloukitchen_' }
+  )
+})
+
+test('parseOgDescription keeps quotes that appear inside the caption', () => {
+  assert.deepEqual(
+    parseOgDescription('1 like, 0 comments - chef on 1 January 2026: "Une recette "spéciale" du jour".'),
+    { caption: 'Une recette "spéciale" du jour', handle: 'chef' }
+  )
+})
+
+test('parseOgDescription returns empty fields for text it cannot parse', () => {
+  assert.deepEqual(parseOgDescription('Instagram'), { caption: '', handle: '' })
+  assert.deepEqual(parseOgDescription(null), { caption: '', handle: '' })
 })
 
 test('withCaption fetches only when the request carries no caption', async () => {
