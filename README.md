@@ -12,7 +12,7 @@ Most recipes here start life as a post someone wrote for Instagram, and Instagra
 
 A headless browser opens the post and reads its caption and the account that posted it straight off the page; Instagram does not require a login to see either. Tracking parameters are stripped from the link before it becomes the recipe's source line, the handle is appended to the directory name (`louloukitchen_` turns `poulet-roti` into `poulet-roti-louloukitchen`), and Gemini drops promotional lines, hashtags and mentions from the caption while turning it into a recipe. If the browser finds no caption on the page, the run fails rather than asking the model to guess one.
 
-For a post the browser cannot read, run the workflow by hand from the Actions tab and paste the caption into its `caption` input: a caption given directly skips the fetch.
+For a post the browser cannot read, write the recipe locally instead (see below) with the caption pasted into `request.md`: a caption given directly skips the fetch.
 
 The model never writes RecipeMD. It fills in a schema, and [`scripts/add-recipe/render.js`](scripts/add-recipe/render.js) turns that into markdown, so a malformed document is not a failure mode it can reach. The result is parsed back with Cookbook's own parser and re-rendered; if those two disagree the run fails rather than committing a recipe that quietly lost an ingredient. The reference Python parser then checks it once more before the pull request opens.
 

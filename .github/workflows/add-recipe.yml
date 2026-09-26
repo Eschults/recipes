@@ -1,27 +1,19 @@
 name: Add a recipe from a caption
 
-# Issue forms are the only trigger GitHub offers with a real textarea, and a
-# caption is many lines long. workflow_dispatch is kept for the command line,
-# where multi-line values pass fine through the API even though the web form
-# renders a single-line box.
-#
 # `labeled` only, never `opened`: the issue form applies the label as it
 # creates the issue, so listening for both ran everything twice. Labelling by
 # hand afterwards is also a valid way in, and this covers it.
+#
+# workflow_dispatch takes the same single field as the issue form, for
+# running this from the command line or the Actions tab.
 on:
   issues:
     types: [labeled]
   workflow_dispatch:
     inputs:
-      caption:
-        description: The caption to turn into a recipe. Read from the post when left empty.
-        required: false
       url:
         description: Link to the original post
-        required: false
-      handle:
-        description: Instagram handle of the account it came from
-        required: false
+        required: true
 
 permissions:
   contents: write
@@ -79,16 +71,10 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           ISSUE_BODY: ${{ github.event.issue.body }}
-          INPUT_CAPTION: ${{ inputs.caption }}
           INPUT_URL: ${{ inputs.url }}
-          INPUT_HANDLE: ${{ inputs.handle }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            {
-              printf '### Caption\n\n%s\n\n' "${INPUT_CAPTION:-_No response_}"
-              printf '### Source URL\n\n%s\n\n' "${INPUT_URL:-_No response_}"
-              printf '### Instagram handle\n\n%s\n' "${INPUT_HANDLE:-_No response_}"
-            } > request.md
+            printf '### Source URL\n\n%s\n' "$INPUT_URL" > request.md
           else
             printf '%s' "$ISSUE_BODY" > request.md
           fi
