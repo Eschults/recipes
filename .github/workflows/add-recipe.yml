@@ -14,8 +14,8 @@ on:
   workflow_dispatch:
     inputs:
       caption:
-        description: The caption to turn into a recipe
-        required: true
+        description: The caption to turn into a recipe. Read from the post when left empty.
+        required: false
       url:
         description: Link to the original post
         required: false
@@ -78,7 +78,7 @@ jobs:
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             {
-              printf '### Caption\n\n%s\n\n' "$INPUT_CAPTION"
+              printf '### Caption\n\n%s\n\n' "${INPUT_CAPTION:-_No response_}"
               printf '### Source URL\n\n%s\n\n' "${INPUT_URL:-_No response_}"
               printf '### Instagram handle\n\n%s\n' "${INPUT_HANDLE:-_No response_}"
             } > request.md
